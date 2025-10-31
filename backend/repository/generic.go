@@ -8,39 +8,39 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type GenericRepo[T any] struct {
+type GenericRepo[T any, U any] struct {
 	database   *mongo.Database
 	Collection *mongo.Collection
 }
 
-func NewGenericRepo[T any](database *mongo.Database, collectionName string) *GenericRepo[T] {
-	return &GenericRepo[T]{
+func NewGenericRepo[T any, U any](database *mongo.Database, collectionName string) *GenericRepo[T, U] {
+	return &GenericRepo[T, U]{
 		database:   database,
 		Collection: database.Collection(collectionName),
 	}
 }
 
-func (r *GenericRepo[T]) FindPaged(ctx context.Context, page, limit int64) ([]T, int64, error) {
+func (r *GenericRepo[T, U]) FindPaged(ctx context.Context, page, limit int64) ([]T, int64, error) {
 	return FindPaged[T](ctx, r.Collection, page, limit)
 }
 
-func (r *GenericRepo[T]) Find(ctx context.Context) ([]T, error) {
+func (r *GenericRepo[T, U]) Find(ctx context.Context) ([]T, error) {
 	return Find[T](ctx, r.Collection)
 }
 
-func (r *GenericRepo[T]) Create(ctx context.Context, value *T) (bson.ObjectID, error) {
+func (r *GenericRepo[T, U]) Create(ctx context.Context, value *T) (bson.ObjectID, error) {
 	return Create(ctx, r.Collection, value)
 }
 
-func (r *GenericRepo[T]) GetByID(ctx context.Context, id bson.ObjectID) (*T, error) {
+func (r *GenericRepo[T, U]) GetByID(ctx context.Context, id bson.ObjectID) (*T, error) {
 	return GetByID[T](ctx, r.Collection, id)
 }
 
-func (r *GenericRepo[T]) Update(ctx context.Context, id bson.ObjectID, update any) error {
+func (r *GenericRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update U) error {
 	return Update(ctx, r.Collection, id, update)
 }
 
-func (r *GenericRepo[T]) Delete(ctx context.Context, id bson.ObjectID) error {
+func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error {
 	return Delete(ctx, r.Collection, id)
 }
 
