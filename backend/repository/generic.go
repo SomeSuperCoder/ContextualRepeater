@@ -36,7 +36,7 @@ func (r *GenericRepo[T, U]) GetByID(ctx context.Context, id bson.ObjectID) (*T, 
 	return GetByID[T](ctx, r.Collection, id)
 }
 
-func (r *GenericRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update U) error {
+func (r *GenericRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update *U) error {
 	return Update(ctx, r.Collection, id, update)
 }
 

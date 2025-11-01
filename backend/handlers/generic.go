@@ -95,19 +95,21 @@ func FindPaged[T any](w http.ResponseWriter, r *http.Request, repo PagedFinder[T
 }
 
 // ====================
-type ValueGenerator[T any] = func() T
+type ValueGenerator[T any, R any] = func(r *R) *T
 type Callback = func(createdID bson.ObjectID)
 
 type Creatator[T any] interface {
-	Create(ctx context.Context, value T) (bson.ObjectID, error)
+	Create(ctx context.Context, value *T) (bson.ObjectID, error)
 }
 
-func Create[T any, R any](w http.ResponseWriter, r *http.Request, repo Creatator[T], request *R, accessChecker AccessChecker, valueGenerator ValueGenerator[T], callback Callback) {
+func Create[T any, R any](w http.ResponseWriter, r *http.Request, repo Creatator[T], valueGenerator ValueGenerator[T, R], callback Callback) {
+	var request *R
+
 	if DefaultParseAndValidate(w, r, request) {
 		return
 	}
 
-	createdID, exit := CreateInner(w, r, repo, valueGenerator())
+	createdID, exit := CreateInner(w, r, repo, valueGenerator(request))
 	if exit {
 		return
 	}
@@ -116,7 +118,7 @@ func Create[T any, R any](w http.ResponseWriter, r *http.Request, repo Creatator
 	}
 }
 
-func CreateInner[T any](w http.ResponseWriter, r *http.Request, repo Creatator[T], newValue T) (bson.ObjectID, bool) {
+func CreateInner[T any](w http.ResponseWriter, r *http.Request, repo Creatator[T], newValue *T) (bson.ObjectID, bool) {
 	createdID, err := repo.Create(r.Context(), newValue)
 	if utils.CheckError(w, err, "Failed to create", http.StatusInternalServerError) {
 		return bson.NilObjectID, true
@@ -127,11 +129,11 @@ func CreateInner[T any](w http.ResponseWriter, r *http.Request, repo Creatator[T
 // ====================
 type ValidatorBuilder = func(r *http.Request, id bson.ObjectID) (validators.Validator, bool)
 
-type Updater interface {
-	Update(ctx context.Context, id bson.ObjectID, update any) error
+type Updater[T any] interface {
+	Update(ctx context.Context, id bson.ObjectID, update *T) error
 }
 
-func UpdateInner(w http.ResponseWriter, r *http.Request, repo Updater, id bson.ObjectID, request any) {
+func UpdateInner[T any](w http.ResponseWriter, r *http.Request, repo Updater[T], id bson.ObjectID, request *T) {
 	// Do work
 	err := repo.Update(r.Context(), id, request)
 	if utils.CheckError(w, err, "Failed to update", http.StatusInternalServerError) {
@@ -142,11 +144,13 @@ func UpdateInner(w http.ResponseWriter, r *http.Request, repo Updater, id bson.O
 	fmt.Fprintf(w, "Successfully updated")
 }
 
-func DefaultUpdate[T any](w http.ResponseWriter, r *http.Request, repo Updater, request *T) {
-	Update(w, r, repo, request, nil)
+func DefaultUpdate[R any](w http.ResponseWriter, r *http.Request, repo Updater[R]) {
+	Update[R](w, r, repo, nil)
 }
 
-func Update[T any](w http.ResponseWriter, r *http.Request, repo Updater, request *T, validatorBuilder ValidatorBuilder) {
+func Update[R any](w http.ResponseWriter, r *http.Request, repo Updater[R], validatorBuilder ValidatorBuilder) {
+	var request *R
+
 	var id bson.ObjectID
 	var exit bool
 	if id, exit = utils.ParseRequestID(w, r); exit {
