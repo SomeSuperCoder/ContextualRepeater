@@ -52,7 +52,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 
 	// Get the project database
-	a.db = a.client.Database("hackathonframework")
+	a.db = a.client.Database("contextualrepeater")
 
 	// ========== Load Routes ==========
 	a.router = loadRoutes(a.db)

@@ -13,15 +13,15 @@ type PageHandler struct {
 	Repo *repository.PageRepo
 }
 
-func (h *PageHandler) GetPaged(r *http.Request, w http.ResponseWriter) {
+func (h *PageHandler) GetPaged(w http.ResponseWriter, r *http.Request) {
 	FindPaged(w, r, h.Repo)
 }
 
-func (h *PageHandler) Get(r *http.Request, w http.ResponseWriter) {
+func (h *PageHandler) Get(w http.ResponseWriter, r *http.Request) {
 	GetByID(w, r, h.Repo)
 }
 
-func (h *PageHandler) Create(r *http.Request, w http.ResponseWriter) {
+func (h *PageHandler) Create(w http.ResponseWriter, r *http.Request) {
 	Create(w, r, h.Repo, func(r *models.PageCreateRequest) *models.Page {
 		return &models.Page{
 			Title:       r.Title,
@@ -33,10 +33,10 @@ func (h *PageHandler) Create(r *http.Request, w http.ResponseWriter) {
 	}, func(createdID bson.ObjectID) {})
 }
 
-func (h *PageHandler) Upadate(r *http.Request, w http.ResponseWriter) {
+func (h *PageHandler) Upadate(w http.ResponseWriter, r *http.Request) {
 	DefaultUpdate(w, r, h.Repo)
 }
 
-func (h *PageHandler) Delete(r *http.Request, w http.ResponseWriter) {
+func (h *PageHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	Delete(w, r, h.Repo)
 }

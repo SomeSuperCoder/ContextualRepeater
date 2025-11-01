@@ -103,7 +103,7 @@ type Creatator[T any] interface {
 }
 
 func Create[T any, R any](w http.ResponseWriter, r *http.Request, repo Creatator[T], valueGenerator ValueGenerator[T, R], callback Callback) {
-	var request *R
+	var request = new(R)
 
 	if DefaultParseAndValidate(w, r, request) {
 		return
@@ -145,11 +145,11 @@ func UpdateInner[T any](w http.ResponseWriter, r *http.Request, repo Updater[T],
 }
 
 func DefaultUpdate[R any](w http.ResponseWriter, r *http.Request, repo Updater[R]) {
-	Update[R](w, r, repo, nil)
+	Update(w, r, repo, nil)
 }
 
 func Update[R any](w http.ResponseWriter, r *http.Request, repo Updater[R], validatorBuilder ValidatorBuilder) {
-	var request *R
+	var request = new(R)
 
 	var id bson.ObjectID
 	var exit bool
