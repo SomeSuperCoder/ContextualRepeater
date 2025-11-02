@@ -2,8 +2,6 @@ package middleware
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"time"
 )
@@ -19,14 +17,6 @@ func LoggerMiddleware(next http.Handler) http.Handler {
 		duration := time.Since(start)
 
 		fmt.Printf("%s %s took %v - %d %s\n", r.Method, r.URL.Path, duration, wrapped.statusCode, http.StatusText(wrapped.statusCode))
-
-		if wrapped.statusCode/100 != 2 {
-			data, err := io.ReadAll(r.Body)
-			if err != nil {
-				log.Fatal("Failed to read response body in the logger middleware")
-			}
-			fmt.Print(string(data))
-		}
 	})
 }
 

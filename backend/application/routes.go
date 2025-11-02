@@ -16,23 +16,28 @@ func loadRoutes(db *mongo.Database) http.Handler {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "OK")
 	})
-	mux.Handle("/pages/", loadPageRoutes(db))
 
-	return middleware.LoggerMiddleware(mux)
-}
-
-func loadPageRoutes(db *mongo.Database) http.Handler {
-	mux := http.NewServeMux()
-
+	// =========================
+	// Page routes
+	// =========================
 	pageHandler := handlers.PageHandler{
 		Repo: repository.NewPageRepo(db),
 	}
 
-	mux.HandleFunc("GET /", pageHandler.GetPaged)
-	mux.HandleFunc("GET /{id}", pageHandler.Get)
-	mux.HandleFunc("POST /", pageHandler.Create)
-	mux.HandleFunc("PATCH /{id}", pageHandler.Upadate)
-	mux.HandleFunc("DELETE /{id}", pageHandler.Delete)
+	mux.HandleFunc("GET /pages/{$}", pageHandler.GetPaged)
+	mux.HandleFunc("GET /pages/{id}", pageHandler.Get)
+	mux.HandleFunc("POST /pages/{$}", pageHandler.Create)
+	mux.HandleFunc("PATCH /pages/{id}", pageHandler.Upadate)
+	mux.HandleFunc("DELETE /pages/{id}", pageHandler.Delete)
 
-	return http.StripPrefix("/pages", mux)
+	// =========================
+	// Sentence routes
+	// =========================
+	sentenceHandler := handlers.SentenceHandler{
+		Repo: repository.NewSentenceRepo(db),
+	}
+
+	mux.HandleFunc("POST /pages/{id}/sentences/", sentenceHandler.Push)
+
+	return middleware.LoggerMiddleware(mux)
 }
