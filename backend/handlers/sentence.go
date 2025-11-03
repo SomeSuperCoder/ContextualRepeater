@@ -20,3 +20,7 @@ func (h *SentenceHandler) Push(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 }
+
+func (h *SentenceHandler) Pull(w http.ResponseWriter, r *http.Request) {
+	Pull(w, r, h.Repo)
+}

@@ -38,6 +38,7 @@ func loadRoutes(db *mongo.Database) http.Handler {
 	}
 
 	mux.HandleFunc("POST /pages/{id}/sentences/", sentenceHandler.Push)
+	mux.HandleFunc("DELETE /pages/{id}/sentences/", sentenceHandler.Pull)
 
 	return middleware.LoggerMiddleware(mux)
 }
