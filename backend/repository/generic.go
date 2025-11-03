@@ -20,6 +20,10 @@ func NewGenericRepo[T any, U any](database *mongo.Database, collectionName strin
 	}
 }
 
+type PagedFinder[T any] interface {
+	FindPaged(ctx context.Context, page, limit int64) ([]T, int64, error)
+}
+
 func (r *GenericRepo[T, U]) FindPaged(ctx context.Context, page, limit int64) ([]T, int64, error) {
 	var values = []T{}
 
@@ -49,8 +53,16 @@ func (r *GenericRepo[T, U]) FindPaged(ctx context.Context, page, limit int64) ([
 	return values, count, err
 }
 
+type Finder[T any] interface {
+	Find(ctx context.Context) ([]T, error)
+}
+
 func (r *GenericRepo[T, U]) Find(ctx context.Context) ([]T, error) {
 	return FindWithFilter[T](ctx, r.Collection, struct{}{})
+}
+
+type Creatator[T any] interface {
+	Create(ctx context.Context, value *T) (bson.ObjectID, error)
 }
 
 func (r *GenericRepo[T, U]) Create(ctx context.Context, value *T) (bson.ObjectID, error) {
@@ -59,9 +71,17 @@ func (r *GenericRepo[T, U]) Create(ctx context.Context, value *T) (bson.ObjectID
 	return objID, err
 }
 
+type GetterByID[T any] interface {
+	GetByID(ctx context.Context, id bson.ObjectID) (T, error)
+}
+
 func (r *GenericRepo[T, U]) GetByID(ctx context.Context, id bson.ObjectID) (*T, error) {
 	return GetBy[T](ctx, r.Collection, "_id", id)
 
+}
+
+type Updater[T any] interface {
+	Update(ctx context.Context, id bson.ObjectID, update *T) error
 }
 
 func (r *GenericRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update *U) error {
@@ -72,6 +92,10 @@ func (r *GenericRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update
 	})
 
 	return res.Err()
+}
+
+type Deleter interface {
+	Delete(ctx context.Context, id bson.ObjectID) error
 }
 
 func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error {
@@ -86,7 +110,7 @@ func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error 
 }
 
 // =============================
-// Helper funcs
+// ======= Helper funcs ========
 // =============================
 func FindWithFilter[T any](ctx context.Context, c *mongo.Collection, filter any) ([]T, error) {
 	var values = []T{}
