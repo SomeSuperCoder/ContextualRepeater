@@ -8,14 +8,14 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-type GenericArrayRepo[T any] struct {
+type GenericArrayRepo[T any, U any] struct {
 	database   *mongo.Database
 	Collection *mongo.Collection
 	Field      string
 }
 
-func NewGenericArrayRepo[T any](database *mongo.Database, collectionName string, field string) *GenericArrayRepo[T] {
-	return &GenericArrayRepo[T]{
+func NewGenericArrayRepo[T any, U any](database *mongo.Database, collectionName string, field string) *GenericArrayRepo[T, U] {
+	return &GenericArrayRepo[T, U]{
 		database:   database,
 		Collection: database.Collection(collectionName),
 		Field:      field,
@@ -26,7 +26,7 @@ type Pusher[T any] interface {
 	Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error
 }
 
-func (r *GenericArrayRepo[T]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
+func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
 	update := bson.M{
 		"$push": bson.M{
 			r.Field: bson.M{
@@ -44,7 +44,7 @@ type Puller interface {
 	Pull(ctx context.Context, id bson.ObjectID, position int) error
 }
 
-func (r *GenericArrayRepo[T]) Pull(ctx context.Context, id bson.ObjectID, position int) error {
+func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID, position int) error {
 	update := bson.M{
 		"$unset": bson.M{
 			fmt.Sprintf("%s.%d", r.Field, position): "",
@@ -64,5 +64,20 @@ func (r *GenericArrayRepo[T]) Pull(ctx context.Context, id bson.ObjectID, positi
 	}
 
 	_, err = r.Collection.UpdateByID(ctx, id, update)
+	return err
+}
+
+type ArrayUpdater[U any] interface {
+	UpdateByIndex(ctx context.Context, id bson.ObjectID, position int, update U) error
+}
+
+func (r *GenericArrayRepo[T, U]) UpdateByIndex(ctx context.Context, id bson.ObjectID, position int, update U) error {
+	mongoUpdate := bson.M{
+		"$set": bson.M{
+			fmt.Sprintf("%s.%v", r.Field, position): update,
+		},
+	}
+
+	_, err := r.Collection.UpdateByID(ctx, id, mongoUpdate)
 	return err
 }

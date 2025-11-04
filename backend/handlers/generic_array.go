@@ -59,3 +59,27 @@ func Pull(w http.ResponseWriter, r *http.Request, repo repository.Puller) {
 		return
 	}
 }
+
+type ArrayUpdateRequest[U any] struct {
+	Update   U    `json:"update" validate:"required"`
+	Position *int `json:"position" validate:"required"`
+}
+
+func ArrayUpdate[U any](w http.ResponseWriter, r *http.Request, repo repository.ArrayUpdater[U]) {
+	var request = new(ArrayUpdateRequest[U])
+
+	var id bson.ObjectID
+	var exit bool
+	if id, exit = utils.ParseRequestID(w, r); exit {
+		return
+	}
+
+	if DefaultParseAndValidate(w, r, request) {
+		return
+	}
+
+	err := repo.UpdateByIndex(r.Context(), id, *request.Position, request.Update)
+	if utils.CheckError(w, err, "Failed to update an array element", http.StatusInternalServerError) {
+		return
+	}
+}
