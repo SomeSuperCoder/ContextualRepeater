@@ -20,8 +20,8 @@ func NewGenericRepo[T any, U any](database *mongo.Database, collectionName strin
 	}
 }
 
-func ToArrayRepo[T any, U any](r *GenericRepo[any, any], fieldPath ArrayFieldPath) *GenericArrayRepo[T, U] {
-	return &GenericArrayRepo[T, U]{
+func ToArrayRepo[T any, U any, OT any, OU any](r *GenericRepo[OT, OU], fieldPath ArrayFieldPath) *GenericArrayRepo[T, U, OT, OU] {
+	return &GenericArrayRepo[T, U, OT, OU]{
 		GenericRepo: r,
 		FieldPath:   fieldPath,
 	}
@@ -120,8 +120,8 @@ func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error 
 // ===== Array related stuff ======
 // ================================
 
-type GenericArrayRepo[T any, U any] struct {
-	*GenericRepo[any, any]
+type GenericArrayRepo[T any, U any, OT any, OU any] struct {
+	*GenericRepo[OT, OU]
 	FieldPath ArrayFieldPath
 }
 
@@ -129,7 +129,7 @@ type Pusher[T any] interface {
 	Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error
 }
 
-func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
+func (r *GenericArrayRepo[T, U, OT, OU]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
 	update := bson.M{
 		"$push": bson.M{
 			r.FieldPath.GetPushPath(): bson.M{
@@ -147,7 +147,7 @@ type Puller interface {
 	Pull(ctx context.Context, id bson.ObjectID, position int) error
 }
 
-func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID) error {
+func (r *GenericArrayRepo[T, U, OT, OU]) Pull(ctx context.Context, id bson.ObjectID) error {
 	update := bson.M{
 		"$unset": bson.M{
 			r.FieldPath.GetPullPath(): "",
@@ -174,7 +174,7 @@ type ArrayUpdater[U any] interface {
 	UpdateByIndex(ctx context.Context, id bson.ObjectID, position int, update U) error
 }
 
-func (r *GenericArrayRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update U) error {
+func (r *GenericArrayRepo[T, U, OT, OU]) Update(ctx context.Context, id bson.ObjectID, update U) error {
 	mongoUpdate := bson.M{
 		"$set": bson.M{
 			r.FieldPath.GetUpdatePath(): update,

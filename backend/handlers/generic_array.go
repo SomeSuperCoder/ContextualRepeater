@@ -13,7 +13,7 @@ type PushRequest[T any] struct {
 	Positon *int `json:"position" validate:"required"`
 }
 
-func Push[T any, R any](w http.ResponseWriter, r *http.Request, repo repository.Pusher[T], valueGenerator ValueGenerator[T, R]) {
+func Push[T any, R any, OT any, OU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericRepo[OT, OU], valueGenerator ValueGenerator[T, R]) {
 	var request = new(PushRequest[R])
 
 	var id bson.ObjectID
@@ -31,7 +31,9 @@ func Push[T any, R any](w http.ResponseWriter, r *http.Request, repo repository.
 		transformedPayload[i] = valueGenerator(v)
 	}
 
-	err := repo.Push(r.Context(), id, transformedPayload, *request.Positon)
+	// TODO: fix me
+	converted := repository.ToArrayRepo[T, any](repo, repository.ArrayFieldPath{})
+	err := converted.Push(r.Context(), id, transformedPayload, *request.Positon)
 	if utils.CheckError(w, err, "Failed to push", http.StatusInternalServerError) {
 		return
 	}
@@ -41,7 +43,7 @@ type PullRequest struct {
 	Positon *int `json:"position" validate:"required"`
 }
 
-func Pull(w http.ResponseWriter, r *http.Request, repo repository.Puller) {
+func Pull[OT any, OU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericRepo[OT, OU]) {
 	var request = new(PullRequest)
 
 	var id bson.ObjectID
@@ -54,7 +56,9 @@ func Pull(w http.ResponseWriter, r *http.Request, repo repository.Puller) {
 		return
 	}
 
-	err := repo.Pull(r.Context(), id, *request.Positon)
+	// TODO: fix me
+	converted := repository.ToArrayRepo[any, any](repo, repository.ArrayFieldPath{})
+	err := converted.Pull(r.Context(), id)
 	if utils.CheckError(w, err, "Failed to pull", http.StatusInternalServerError) {
 		return
 	}
@@ -65,7 +69,7 @@ type ArrayUpdateRequest[U any] struct {
 	Position *int `json:"position" validate:"required"`
 }
 
-func ArrayUpdate[U any](w http.ResponseWriter, r *http.Request, repo repository.ArrayUpdater[U]) {
+func ArrayUpdate[U any, OT any, OU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericRepo[OT, OU]) {
 	var request = new(ArrayUpdateRequest[U])
 
 	var id bson.ObjectID
@@ -77,8 +81,9 @@ func ArrayUpdate[U any](w http.ResponseWriter, r *http.Request, repo repository.
 	if DefaultParseAndValidate(w, r, request) {
 		return
 	}
-
-	err := repo.UpdateByIndex(r.Context(), id, *request.Position, request.Update)
+	// TODO: fix me
+	converted := repository.ToArrayRepo[any, U](repo, repository.ArrayFieldPath{})
+	err := converted.Update(r.Context(), id, request.Update)
 	if utils.CheckError(w, err, "Failed to update an array element", http.StatusInternalServerError) {
 		return
 	}
