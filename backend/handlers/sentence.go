@@ -8,7 +8,7 @@ import (
 )
 
 type SentenceHandler struct {
-	Repo *repository.PageRepo
+	Repo *repository.SentenceRepo
 }
 
 func (h *SentenceHandler) Push(w http.ResponseWriter, r *http.Request) {

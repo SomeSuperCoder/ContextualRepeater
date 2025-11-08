@@ -67,7 +67,7 @@ type ArrayUpdateRequest[U any] struct {
 	Position *int `json:"position" validate:"required"`
 }
 
-func ArrayUpdate[U any, IT any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[IT, U]) {
+func ArrayUpdate[U any, IT any, IU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[IT, IU]) {
 	var request = new(ArrayUpdateRequest[U])
 
 	var id bson.ObjectID
