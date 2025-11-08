@@ -20,6 +20,13 @@ func NewGenericRepo[T any, U any](database *mongo.Database, collectionName strin
 	}
 }
 
+func ToArrayRepo[T any, U any](r *GenericRepo[any, any], fieldPath ArrayFieldPath) *GenericArrayRepo[T, U] {
+	return &GenericArrayRepo[T, U]{
+		GenericRepo: r,
+		FieldPath:   fieldPath,
+	}
+}
+
 type PagedFinder[T any] interface {
 	FindPaged(ctx context.Context, page, limit int64) ([]T, int64, error)
 }
@@ -107,6 +114,75 @@ func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error 
 	}
 
 	return nil
+}
+
+// ================================
+// ===== Array related stuff ======
+// ================================
+
+type GenericArrayRepo[T any, U any] struct {
+	*GenericRepo[any, any]
+	FieldPath ArrayFieldPath
+}
+
+type Pusher[T any] interface {
+	Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error
+}
+
+func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
+	update := bson.M{
+		"$push": bson.M{
+			r.FieldPath.GetPushPath(): bson.M{
+				"$each":     values,
+				"$position": position,
+			},
+		},
+	}
+
+	_, err := r.Collection.UpdateByID(ctx, id, update)
+	return err
+}
+
+type Puller interface {
+	Pull(ctx context.Context, id bson.ObjectID, position int) error
+}
+
+func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID) error {
+	update := bson.M{
+		"$unset": bson.M{
+			r.FieldPath.GetPullPath(): "",
+		},
+	}
+
+	_, err := r.Collection.UpdateByID(ctx, id, update)
+	if err != nil {
+		return err
+	}
+
+	// Remove the null value created by unset
+	update = bson.M{
+		"$pull": bson.M{
+			r.FieldPath.GetUpdatePath(): nil,
+		},
+	}
+
+	_, err = r.Collection.UpdateByID(ctx, id, update)
+	return err
+}
+
+type ArrayUpdater[U any] interface {
+	UpdateByIndex(ctx context.Context, id bson.ObjectID, position int, update U) error
+}
+
+func (r *GenericArrayRepo[T, U]) Update(ctx context.Context, id bson.ObjectID, update U) error {
+	mongoUpdate := bson.M{
+		"$set": bson.M{
+			r.FieldPath.GetUpdatePath(): update,
+		},
+	}
+
+	_, err := r.Collection.UpdateByID(ctx, id, mongoUpdate)
+	return err
 }
 
 // =============================
