@@ -1,11 +1,33 @@
 package repository
 
 import (
+	"net/http"
 	"strconv"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
+
+func FromArrayFieldPath[T, U any](r *http.Request, idList []string) (*ArrayFieldPath[T, U], error) {
+	var result = &ArrayFieldPath[T, U]{
+		Pairs: make([]FieldIndexPair, len(idList)),
+	}
+
+	for i, id := range idList {
+		unparsed := r.PathValue(id)
+		parsed, err := strconv.Atoi(unparsed)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Pairs[i] = FieldIndexPair{
+			Field: id,
+			Index: parsed,
+		}
+	}
+
+	return result, nil
+}
 
 type FieldIndexPair struct {
 	Field string
