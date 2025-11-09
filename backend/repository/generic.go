@@ -123,7 +123,7 @@ func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error 
 type GenericArrayRepo[T any, U any] struct {
 	database   *mongo.Database
 	Collection *mongo.Collection
-	FieldPath  ArrayFieldPath
+	FieldPath  ArrayFieldPath[T, U]
 }
 
 type Pusher[T any] interface {
@@ -131,15 +131,7 @@ type Pusher[T any] interface {
 }
 
 func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
-	update := bson.M{
-		"$push": bson.M{
-			r.FieldPath.GetPushPath(): bson.M{
-				"$each":     values,
-				"$position": position,
-			},
-		},
-	}
-
+	update := r.FieldPath.FormPushUpdate(values)
 	_, err := r.Collection.UpdateByID(ctx, id, update)
 	return err
 }
@@ -149,11 +141,7 @@ type Puller interface {
 }
 
 func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID) error {
-	update := bson.M{
-		"$unset": bson.M{
-			r.FieldPath.GetPullPath(): "",
-		},
-	}
+	update := r.FieldPath.FormUnsetUpdate()
 
 	_, err := r.Collection.UpdateByID(ctx, id, update)
 	if err != nil {
@@ -161,11 +149,7 @@ func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID) err
 	}
 
 	// Remove the null value created by unset
-	update = bson.M{
-		"$pull": bson.M{
-			r.FieldPath.GetUpdatePath(): nil,
-		},
-	}
+	update = r.FieldPath.FormPullUpdate()
 
 	_, err = r.Collection.UpdateByID(ctx, id, update)
 	return err
@@ -176,11 +160,7 @@ type ArrayUpdater[U any] interface {
 }
 
 func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update U) error {
-	mongoUpdate := bson.M{
-		"$set": bson.M{
-			r.FieldPath.GetUpdatePath(): update,
-		},
-	}
+	mongoUpdate := r.FieldPath.FormUpdateUpdate(update)
 
 	_, err := r.Collection.UpdateByID(ctx, id, mongoUpdate)
 	return err
