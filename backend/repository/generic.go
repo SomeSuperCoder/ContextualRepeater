@@ -123,15 +123,14 @@ func (r *GenericRepo[T, U]) Delete(ctx context.Context, id bson.ObjectID) error 
 type GenericArrayRepo[T any, U any] struct {
 	database   *mongo.Database
 	Collection *mongo.Collection
-	FieldPath  ArrayFieldPath[T, U]
 }
 
 type Pusher[T any] interface {
 	Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error
 }
 
-func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error {
-	update := r.FieldPath.FormPushUpdate(values)
+func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, fieldPath ArrayFieldPath[T, U]) error {
+	update := fieldPath.FormPushUpdate(values)
 	_, err := r.Collection.UpdateByID(ctx, id, update)
 	return err
 }
@@ -140,8 +139,8 @@ type Puller interface {
 	Pull(ctx context.Context, id bson.ObjectID, position int) error
 }
 
-func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID) error {
-	update := r.FieldPath.FormUnsetUpdate()
+func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID, fieldPath ArrayFieldPath[T, U]) error {
+	update := fieldPath.FormUnsetUpdate()
 
 	_, err := r.Collection.UpdateByID(ctx, id, update)
 	if err != nil {
@@ -149,7 +148,7 @@ func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID) err
 	}
 
 	// Remove the null value created by unset
-	update = r.FieldPath.FormPullUpdate()
+	update = fieldPath.FormPullUpdate()
 
 	_, err = r.Collection.UpdateByID(ctx, id, update)
 	return err
@@ -159,8 +158,8 @@ type ArrayUpdater[U any] interface {
 	ArrayUpdate(ctx context.Context, id bson.ObjectID, position int, update U) error
 }
 
-func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update U) error {
-	mongoUpdate := r.FieldPath.FormUpdateUpdate(update)
+func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update U, fieldPath ArrayFieldPath[T, U]) error {
+	mongoUpdate := fieldPath.FormUpdateUpdate(update)
 
 	_, err := r.Collection.UpdateByID(ctx, id, mongoUpdate)
 	return err
