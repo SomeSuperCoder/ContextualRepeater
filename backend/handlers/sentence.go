@@ -11,6 +11,8 @@ type SentenceHandler struct {
 	Repo *repository.SentenceRepo
 }
 
+var arrayPath = []string{"sentences"}
+
 func (h *SentenceHandler) Push(w http.ResponseWriter, r *http.Request) {
 	Push(w, r, h.Repo, func(r *models.SentenceCreateRequest) *models.Sentence {
 		return &models.Sentence{
@@ -18,13 +20,13 @@ func (h *SentenceHandler) Push(w http.ResponseWriter, r *http.Request) {
 			ExtraContent: r.ExtraContent,
 			Reviews:      make([]models.Review, 0),
 		}
-	})
+	}, arrayPath)
 }
 
 func (h *SentenceHandler) Pull(w http.ResponseWriter, r *http.Request) {
-	Pull(w, r, h.Repo)
+	Pull(w, r, h.Repo, arrayPath)
 }
 
 func (h *SentenceHandler) ArrayUpdate(w http.ResponseWriter, r *http.Request) {
-	ArrayUpdate(w, r, h.Repo)
+	ArrayUpdate(w, r, h.Repo, arrayPath)
 }

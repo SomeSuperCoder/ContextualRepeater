@@ -139,7 +139,7 @@ type Puller interface {
 	Pull(ctx context.Context, id bson.ObjectID, position int) error
 }
 
-func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID, fieldPath ArrayFieldPath[T, U]) error {
+func (r *GenericArrayRepo[T, U]) Pull(ctx context.Context, id bson.ObjectID, fieldPath *ArrayFieldPath[T, U]) error {
 	update := fieldPath.FormUnsetUpdate()
 
 	_, err := r.Collection.UpdateByID(ctx, id, update)
@@ -158,7 +158,7 @@ type ArrayUpdater[U any] interface {
 	ArrayUpdate(ctx context.Context, id bson.ObjectID, position int, update U) error
 }
 
-func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update U, fieldPath ArrayFieldPath[T, U]) error {
+func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update U, fieldPath *ArrayFieldPath[T, U]) error {
 	mongoUpdate := fieldPath.FormUpdateUpdate(update)
 
 	_, err := r.Collection.UpdateByID(ctx, id, mongoUpdate)

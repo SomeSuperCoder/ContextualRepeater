@@ -60,7 +60,7 @@ func (a *ArrayFieldPath[T, U]) FormUnsetUpdate() bson.M {
 func (a *ArrayFieldPath[T, U]) FormPullUpdate() bson.M {
 	return bson.M{
 		"$pull": bson.M{
-			buildArrayField(a.Pairs, false): nil,
+			buildArrayField(a.Pairs, true): nil,
 		},
 	}
 }

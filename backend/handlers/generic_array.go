@@ -13,7 +13,7 @@ type PushRequest[T any] struct {
 	Positon *int `json:"position" validate:"required"`
 }
 
-func Push[T, R, IU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[T, IU], valueGenerator ValueGenerator[T, R]) {
+func Push[T, R, IU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[T, IU], valueGenerator ValueGenerator[T, R], idList []string) {
 	var request = new(PushRequest[R])
 
 	var id bson.ObjectID
@@ -31,10 +31,7 @@ func Push[T, R, IU any](w http.ResponseWriter, r *http.Request, repo *repository
 		transformedPayload[i] = valueGenerator(v)
 	}
 
-	// TODO: fix me
-	fieldPath, err := repository.FromArrayFieldPath[T, IU](r, []string{
-		"sentences",
-	})
+	fieldPath, err := repository.FromArrayFieldPath[T, IU](r, idList)
 	if utils.CheckError(w, err, "Failed to read array field path", http.StatusBadRequest) {
 		return
 	}
@@ -48,24 +45,27 @@ type PullRequest struct {
 	Positon *int `json:"position" validate:"required"`
 }
 
-func Pull[IT, IU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[IT, IU]) {
-	// var request = new(PullRequest)
+func Pull[IT, IU any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[IT, IU], idList []string) {
+	var request = new(PullRequest)
 
-	// var id bson.ObjectID
-	// var exit bool
-	// if id, exit = utils.ParseRequestID(w, r); exit {
-	// return
-	// }
+	var id bson.ObjectID
+	var exit bool
+	if id, exit = utils.ParseRequestID(w, r); exit {
+		return
+	}
 
-	// if DefaultParseAndValidate(w, r, request) {
-	// return
-	// }
+	if DefaultParseAndValidate(w, r, request) {
+		return
+	}
 
-	// TODO: fix me
-	// err := repo.Pull(r.Context(), id)
-	// if utils.CheckError(w, err, "Failed to pull", http.StatusInternalServerError) {
-	// return
-	// }
+	fieldPath, err := repository.FromArrayFieldPath[IT, IU](r, idList)
+	if utils.CheckError(w, err, "Failed to read array field path", http.StatusBadRequest) {
+		return
+	}
+	err = repo.Pull(r.Context(), id, fieldPath)
+	if utils.CheckError(w, err, "Failed to pull", http.StatusInternalServerError) {
+		return
+	}
 }
 
 type ArrayUpdateRequest[U any] struct {
@@ -73,21 +73,25 @@ type ArrayUpdateRequest[U any] struct {
 	Position *int `json:"position" validate:"required"`
 }
 
-func ArrayUpdate[U any, IT any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[IT, U]) {
-	// var request = new(ArrayUpdateRequest[U])
+func ArrayUpdate[U any, IT any](w http.ResponseWriter, r *http.Request, repo *repository.GenericArrayRepo[IT, U], idList []string) {
+	var request = new(ArrayUpdateRequest[U])
 
-	// var id bson.ObjectID
-	// var exit bool
-	// if id, exit = utils.ParseRequestID(w, r); exit {
-	// return
-	// }
+	var id bson.ObjectID
+	var exit bool
+	if id, exit = utils.ParseRequestID(w, r); exit {
+		return
+	}
 
-	// if DefaultParseAndValidate(w, r, request) {
-	// return
-	// }
-	// TODO: fix me
-	// err := repo.ArrayUpdate(r.Context(), id, request.Update)
-	// if utils.CheckError(w, err, "Failed to update an array element", http.StatusInternalServerError) {
-	// return
-	// }
+	if DefaultParseAndValidate(w, r, request) {
+		return
+	}
+
+	fieldPath, err := repository.FromArrayFieldPath[IT, U](r, idList)
+	if utils.CheckError(w, err, "Failed to read array field path", http.StatusBadRequest) {
+		return
+	}
+	err = repo.ArrayUpdate(r.Context(), id, request.Update, fieldPath)
+	if utils.CheckError(w, err, "Failed to update an array element", http.StatusInternalServerError) {
+		return
+	}
 }
