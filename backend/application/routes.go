@@ -37,7 +37,7 @@ func loadRoutes(db *mongo.Database) http.Handler {
 		Repo: repository.NewSentenceRepo(repository.NewPageRepo(db)),
 	}
 
-	mux.HandleFunc("POST /pages/{id}/sentences/", sentenceHandler.Push)
+	mux.HandleFunc("POST /pages/{id}/sentences/{sentences}/", sentenceHandler.Push)
 	mux.HandleFunc("PATCH /pages/{id}/sentences/", sentenceHandler.ArrayUpdate)
 	mux.HandleFunc("DELETE /pages/{id}/sentences/", sentenceHandler.Pull)
 

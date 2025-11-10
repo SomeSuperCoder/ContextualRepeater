@@ -129,7 +129,7 @@ type Pusher[T any] interface {
 	Push(ctx context.Context, id bson.ObjectID, values []*T, position int) error
 }
 
-func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, fieldPath ArrayFieldPath[T, U]) error {
+func (r *GenericArrayRepo[T, U]) Push(ctx context.Context, id bson.ObjectID, values []*T, fieldPath *ArrayFieldPath[T, U]) error {
 	update := fieldPath.FormPushUpdate(values)
 	_, err := r.Collection.UpdateByID(ctx, id, update)
 	return err
