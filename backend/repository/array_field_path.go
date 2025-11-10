@@ -65,7 +65,7 @@ func (a *ArrayFieldPath[T, U]) FormPullUpdate() bson.M {
 	}
 }
 
-func (a *ArrayFieldPath[T, U]) FormUpdateUpdate(update U) bson.M {
+func (a *ArrayFieldPath[T, U]) FormUpdateUpdate(update *U) bson.M {
 	return bson.M{
 		"$set": bson.M{
 			buildArrayField(a.Pairs, false): update,

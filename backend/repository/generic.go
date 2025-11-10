@@ -158,7 +158,7 @@ type ArrayUpdater[U any] interface {
 	ArrayUpdate(ctx context.Context, id bson.ObjectID, position int, update U) error
 }
 
-func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update U, fieldPath *ArrayFieldPath[T, U]) error {
+func (r *GenericArrayRepo[T, U]) ArrayUpdate(ctx context.Context, id bson.ObjectID, update *U, fieldPath *ArrayFieldPath[T, U]) error {
 	mongoUpdate := fieldPath.FormUpdateUpdate(update)
 
 	_, err := r.Collection.UpdateByID(ctx, id, mongoUpdate)
