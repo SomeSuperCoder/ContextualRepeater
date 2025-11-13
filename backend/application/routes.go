@@ -41,5 +41,16 @@ func loadRoutes(db *mongo.Database) http.Handler {
 	mux.HandleFunc("PATCH /pages/{id}/sentences/{sentences}/", sentenceHandler.ArrayUpdate)
 	mux.HandleFunc("DELETE /pages/{id}/sentences/{sentences}/", sentenceHandler.Pull)
 
+	// =========================
+	// Review routes
+	// =========================
+	reviewHandler := handlers.ReviewHandler{
+		Repo: repository.NewReviewRepo(repository.NewPageRepo(db)),
+	}
+
+	mux.HandleFunc("POST /pages/{id}/sentences/{sentences}/reviews/{reviews}/", reviewHandler.Push)
+	mux.HandleFunc("PATCH /pages/{id}/sentences/{sentences}/reviews/{reviews}/", reviewHandler.ArrayUpdate)
+	mux.HandleFunc("DELETE /pages/{id}/sentences/{sentences}/reviews/{reviews}/", reviewHandler.Pull)
+
 	return middleware.LoggerMiddleware(mux)
 }
